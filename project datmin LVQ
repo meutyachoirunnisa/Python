@@ -1,0 +1,135 @@
+import csv
+import numpy as np
+import pandas
+
+
+def lvq_train(X, y, a, b, max_ep):
+    c, train_idx = np.unique(y, True)
+    W = X[train_idx].astype(np.float64)
+    train = np.array([e for i, e in enumerate(zip(X, y)) if i not in train_idx])
+    X = train[:, 0]
+    y = train[:, 1]
+    ep = 0
+
+    while ep < max_ep:
+        for i, x in enumerate(X):
+            d = [sum((w - x) ** 2) for w in W]
+            min = np.argmin(d)
+            s = 1 if y[i] == c[min] else -1
+            W[min] += s * a * (x - W[min])
+
+        a *= b
+        ep += 1
+
+    return W, c
+
+
+def lvq_test(x, W):
+    W, c = W
+    d = [sum((w - x) ** 2) for w in W]
+
+    return c[np.argmin(d)]
+
+def getDataTest():
+    df = pandas.read_csv("Wine Red Quality.csv")
+    df.drop(df.columns[len(df.columns) - 1], axis=1, inplace=True)
+    df = df.values
+
+    dataTest = np.array(df)
+
+    return dataTest
+
+def getDataX():
+    df1 = pandas.read_csv("Wine Red Quality.csv")
+    df1.drop(df1.columns[len(df1.columns) - 1], axis=1, inplace=True)
+    df1 = df1.values
+
+    X = np.array(df1)
+
+    return X
+
+def getDataY():
+    df2 = pandas.read_csv("Wine Red Quality.csv")
+    df2.drop(df2.columns.difference(['quality']), 1, inplace=True)
+    df2 = df2.values
+
+    y = np.array(df2)
+    y = y.ravel()
+
+    return y
+
+def checkAccuracy(data, result):
+    allValue = len(data)
+    trueValue = 0
+
+    for i, check in enumerate(data):
+        if(check == result[i]):
+            trueValue +=1
+
+    value = trueValue/allValue
+    return value
+
+#======================================================================================================================#
+
+# X = np.array([[1, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 1], [0, 1, 1, 0]])
+#
+# y = np.array([1, 2, 2, 1, 2])
+#
+# a = .1
+# b = .5
+# w = lvq_train(X, y, a, b, 10)
+# c = lvq_test([1, 0, 1, 0], w)
+#
+# print(X)
+# print(y)
+
+#======================================================================================================================#
+
+# results = []
+# with open('Wine Red Quality.csv') as csvfile:
+#     readCSV = csv.reader(csvfile, delimiter=',')
+#     dataTest = next(readCSV)
+#     dataTest = next(readCSV)
+#     for row in readCSV: # each row is a list
+#         results.append(row)
+#
+# data = np.array(results)
+# print(dataTest)
+
+#
+# df = pandas.read_csv("Wine Red Quality.csv")
+# df.drop(df.columns[len(df.columns)-1], axis=1, inplace=True)
+# df = df.values
+#======================================================================================================================#
+
+dataTest = getDataTest()
+print(dataTest)
+
+X = getDataX()
+print("Data Set: ")
+print(X)
+
+y = getDataY()
+print(y)
+
+a = .1
+b = .5
+w = lvq_train(X, y, a, b, 10)
+print("\n")
+
+result = np.array([])
+for i, data in enumerate(dataTest):
+    c = lvq_test(data, w)
+    print("=====" + str(i+1) + "=====")
+    print(c)
+    result = np.append(result, int(c))
+    #print(result)
+
+print("\n")
+print(result)
+
+#======================================================================================================================#
+accData = checkAccuracy(y, result)
+
+print("\n")
+print(accData)
